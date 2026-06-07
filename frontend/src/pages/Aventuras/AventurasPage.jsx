@@ -5,22 +5,19 @@ import { getGremio } from '../../services/gremioService'
 import AventureroCard from '../../components/common/AventureroCard'
 import './AventurasPage.css'
 
-function CountDown({ fechaFin }) {
-  const calcRestante = () => {
-    const diff = Math.floor((new Date(fechaFin) - Date.now()) / 1000)
-    return diff > 0 ? diff : 0
-  }
-
-  const [rem, setRem] = useState(calcRestante)
+function CountDown({ segundos }) {
+  // Fuente de verdad: segundosRestantes lo calcula el backend (servidor vs servidor),
+  // asi que es inmune a la zona horaria y al desfase del reloj del cliente.
+  // Aqui solo lo decrementamos localmente cada segundo.
+  const [rem, setRem] = useState(Math.max(0, Math.floor(segundos ?? 0)))
 
   useEffect(() => {
-
+    setRem(Math.max(0, Math.floor(segundos ?? 0)))
     const interval = setInterval(() => {
-      const nuevo = calcRestante()
-      setRem(nuevo)
+      setRem(prev => (prev > 0 ? prev - 1 : 0))
     }, 1000)
     return () => clearInterval(interval)
-  }, [fechaFin])
+  }, [segundos])
 
   if (rem <= 0) return <span style={{color:'var(--success)'}}>¡Lista!</span>
   const h = Math.floor(rem / 3600)
@@ -203,8 +200,8 @@ function AventuraCard({ av, onReclamar }) {
   const total = av.fechaFin && av.fechaInicio
     ? Math.max(1, Math.floor((new Date(av.fechaFin) - new Date(av.fechaInicio)) / 1000))
     : 120
-  const restante = av.fechaFin
-    ? Math.max(0, Math.floor((new Date(av.fechaFin) - Date.now()) / 1000))
+  const restante = av.estado === 'EN_CURSO'
+    ? Math.max(0, Math.floor(av.segundosRestantes ?? 0))
     : 0
   const pct = av.estado === 'COMPLETADA' ? 100
     : Math.min(100, Math.round(((total - restante) / total) * 100))
@@ -224,7 +221,7 @@ function AventuraCard({ av, onReclamar }) {
       </div>
       {av.estado === 'EN_CURSO' && av.fechaFin && (
         <div style={{fontSize:12,color:'var(--text-muted)',textAlign:'center',marginBottom:8}}>
-          ⏱️ <CountDown fechaFin={av.fechaFin} />
+          ⏱️ <CountDown segundos={av.segundosRestantes} />
         </div>
       )}
       <div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:8}}>
