@@ -1,0 +1,29 @@
+.aventuras-page { display: flex; flex-direction: column; gap: 0; }
+.aventura-card { transition: var(--transition); }
+.aventura-card:hover { border-color: rgba(255,215,0,0.2); }
+.aventuras-historial { display: flex; flex-direction: column; gap: 0.4rem; }
+.historial-row { display: flex; align-items: center; padding: 0.6rem 1rem; }
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(4px);
+}
+.modal-box {
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 95vw;
+  max-height: 90vh; overflow-y: auto;
+  position: relative;
+}
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; color: var(--text-muted);
+  font-size: 18px; padding: 0.2rem 0.5rem;
+}
+.diff-badge {
+  background: var(--bg-card); padding: 2px 8px; border-radius: 12px;
+  font-size: 12px; font-weight: 700; color: var(--accent-gold);
+}
