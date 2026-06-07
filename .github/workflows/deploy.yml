@@ -63,19 +63,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check secrets present (debug)
-        run: |
-          echo "SSH_HOST present: ${{ secrets.SSH_HOST != '' }}"
-          echo "SSH_USER present: ${{ secrets.SSH_USER != '' }}"
-          echo "SSH_KEY  present: ${{ secrets.SSH_KEY != '' }}"
-
-      - name: Copy compose file to server
+      - name: Copy compose & Caddy config to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: docker-compose.prod.yml
+          source: "docker-compose.prod.yml,Caddyfile"
           target: /opt/guild-manager
 
       - name: Pull images & restart stack
