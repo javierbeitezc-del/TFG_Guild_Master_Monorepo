@@ -106,23 +106,46 @@ export default function AventurasPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
 
+  const [fetchedAt, setFetchedAt] = useState(() => Date.now())
+
   const fetchData = useCallback(async () => {
     const [aRes, avRes, gRes] = await Promise.all([getAventuras(), getAventureros(), getGremio()])
     setAventuras(aRes.data)
     setAventureros(avRes.data)
     setGremio(gRes.data)
+    setFetchedAt(Date.now())
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // Tick local cada segundo para reevaluar qué aventuras han agotado su tiempo,
+  // sin hacer polling al backend.
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const i = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(i)
+  }, [])
+
+  // "Terminada" si el backend ya la marcó COMPLETADA, o si su tiempo se ha agotado
+  // (segundosRestantes desde la última carga, con +1s de margen). El backend valida
+  // de nuevo el tiempo al reclamar, así que esto no permite reclamar antes de hora.
+  const haTerminado = (a) => {
+    if (a.estado === 'COMPLETADA') return true
+    if (a.estado === 'EN_CURSO') {
+      const transcurrido = (Date.now() - fetchedAt) / 1000
+      return transcurrido >= (a.segundosRestantes ?? 0) + 1
+    }
+    return false
+  }
 
   const handleReclamar = async (id) => {
     await reclamarRecompensa(id)
     fetchData()
   }
 
-  const activas = aventuras.filter(a => a.estado === 'EN_CURSO')
-  const pendientes = aventuras.filter(a => a.estado === 'COMPLETADA' && !a.recompensaReclamada)
+  const activas = aventuras.filter(a => a.estado === 'EN_CURSO' && !haTerminado(a))
+  const pendientes = aventuras.filter(a => !a.recompensaReclamada && haTerminado(a))
   const historial = aventuras.filter(a => a.recompensaReclamada || a.estado === 'FALLIDA')
 
   if (loading) return <div className="spinner" />
@@ -146,7 +169,7 @@ export default function AventurasPage() {
         <div style={{marginBottom:'1.5rem'}}>
           <h2 style={{fontSize:'1rem',marginBottom:'0.8rem',color:'var(--success)'}}>🎁 Listas para reclamar</h2>
           <div className="grid-3">
-            {pendientes.map(av => <AventuraCard key={av.id} av={av} onReclamar={handleReclamar} />)}
+            {pendientes.map(av => <AventuraCard key={av.id} av={av} done onReclamar={handleReclamar} />)}
           </div>
         </div>
       )}
@@ -155,7 +178,7 @@ export default function AventurasPage() {
         <div style={{marginBottom:'1.5rem'}}>
           <h2 style={{fontSize:'1rem',marginBottom:'0.8rem'}}>⚔️ En curso</h2>
           <div className="grid-3">
-            {activas.map(av => <AventuraCard key={av.id} av={av} onReclamar={handleReclamar} />)}
+            {activas.map(av => <AventuraCard key={av.id} av={av} done={false} onReclamar={handleReclamar} />)}
           </div>
         </div>
       )}
@@ -196,14 +219,14 @@ export default function AventurasPage() {
   )
 }
 
-function AventuraCard({ av, onReclamar }) {
+function AventuraCard({ av, done, onReclamar }) {
   const total = av.fechaFin && av.fechaInicio
     ? Math.max(1, Math.floor((new Date(av.fechaFin) - new Date(av.fechaInicio)) / 1000))
     : 120
-  const restante = av.estado === 'EN_CURSO'
+  const restante = (av.estado === 'EN_CURSO' && !done)
     ? Math.max(0, Math.floor(av.segundosRestantes ?? 0))
     : 0
-  const pct = av.estado === 'COMPLETADA' ? 100
+  const pct = done ? 100
     : Math.min(100, Math.round(((total - restante) / total) * 100))
 
   return (
@@ -219,7 +242,7 @@ function AventuraCard({ av, onReclamar }) {
           borderRadius:20, transition:'width 1s linear'
         }}/>
       </div>
-      {av.estado === 'EN_CURSO' && av.fechaFin && (
+      {av.estado === 'EN_CURSO' && !done && (
         <div style={{fontSize:12,color:'var(--text-muted)',textAlign:'center',marginBottom:8}}>
           ⏱️ <CountDown segundos={av.segundosRestantes} />
         </div>
@@ -228,17 +251,12 @@ function AventuraCard({ av, onReclamar }) {
         Recompensa: <span style={{color:'var(--accent-gold)',fontWeight:700}}>{av.oroRecompensa}🪙</span>
         {' · '}<span style={{color:'var(--success)'}}>{av.expRecompensa} XP</span>
       </div>
-      {av.estado === 'COMPLETADA' && !av.recompensaReclamada && (
+      {done && !av.recompensaReclamada && (
         <button className="btn-primary"
           style={{width:'100%',fontSize:13,padding:'0.5rem'}}
           onClick={() => onReclamar(av.id)}>
           🎁 Reclamar Recompensa
         </button>
-      )}
-      {av.estado === 'EN_CURSO' && restante <= 0 && (
-        <div style={{textAlign:'center',fontSize:12,color:'var(--text-secondary)'}}>
-          Finalizando... recarga en unos segundos
-        </div>
       )}
     </div>
   )

@@ -78,8 +78,18 @@ public class AventuraService {
         if (!gremio.getUsuario().getId().equals(usuarioId))
             throw new BusinessException("No tienes acceso a esta aventura");
 
-        if (!aventura.listaParaReclamar())
+        boolean tiempoCumplido = aventura.getFechaFin() != null
+            && !aventura.getFechaFin().isAfter(LocalDateTime.now());
+        boolean reclamable = !aventura.isRecompensaReclamada()
+            && (aventura.estaCompletada()
+                || (aventura.getEstado() == EstadoAventura.EN_CURSO && tiempoCumplido));
+        if (!reclamable)
             throw new BusinessException("La aventura no está lista para reclamar");
+
+        // Si el scheduler todavía no la ha marcado pero el tiempo ya se cumplió
+        // (verificado contra el reloj del servidor), la completamos en el momento.
+        if (aventura.getEstado() == EstadoAventura.EN_CURSO)
+            aventura.setEstado(EstadoAventura.COMPLETADA);
 
         gremio.ganarOro(aventura.getOroRecompensa());
 
