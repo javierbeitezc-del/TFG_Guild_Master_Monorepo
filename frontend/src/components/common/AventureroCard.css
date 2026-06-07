@@ -1,0 +1,17 @@
+.av-card {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  border-left-width: 4px;
+}
+.av-card:hover { transform: translateY(-2px); border-color: rgba(255,215,0,0.3); }
+.av-card--selected { border-color: var(--accent-gold) !important; box-shadow: 0 0 12px rgba(255,215,0,0.3); }
+.av-card--busy { opacity: 0.6; }
+.av-card__header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
+.av-card__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.av-card__name { font-weight: 700; font-size: 14px; }
+.av-card__level { font-size: 12px; color: var(--accent-gold); font-weight: 700; white-space: nowrap; }
+.av-card__stats { display: flex; gap: 0.6rem; font-size: 12px; margin-bottom: 0.5rem; color: var(--text-secondary); }

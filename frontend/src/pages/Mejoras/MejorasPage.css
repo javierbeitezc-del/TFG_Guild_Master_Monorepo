@@ -1,0 +1,36 @@
+.mejoras-page { display: flex; flex-direction: column; }
+
+.mejoras-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 1rem;
+}
+.mejoras-oro {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.8rem 1.2rem;
+}
+
+.mejora-card {
+  display: flex; flex-direction: column;
+  transition: var(--transition);
+}
+.mejora-card:hover { border-color: rgba(255,215,0,0.25); }
+.mejora-card--max { border-color: rgba(255,215,0,0.3); }
+
+.mejora-card__header {
+  display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.3rem;
+}
+.mejora-icon { font-size: 28px; }
+.mejora-card__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.mejora-nombre { font-weight: 700; font-size: 15px; }
+.mejora-nivel { font-size: 12px; color: var(--text-muted); }
+.mejora-mult {
+  font-size: 18px; font-weight: 700; color: var(--success);
+  white-space: nowrap;
+}
+
+.mejora-card__footer {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 0.3rem;
+}
+
+.mejoras-tip { background: rgba(255,215,0,0.04); border: 1px solid rgba(255,215,0,0.15); }
