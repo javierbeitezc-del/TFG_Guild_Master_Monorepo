@@ -6,21 +6,18 @@ import { useGremioStore } from '../../store/gremioStore'
 import './DashboardPage.css'
 
 function AventuraCard({ av, onReclamar }) {
-  const calcRestante = () => {
-    if (!av.fechaFin) return 0
-    const diff = Math.floor((new Date(av.fechaFin) - Date.now()) / 1000)
-    return diff > 0 ? diff : 0
-  }
-
-  const [remaining, setRemaining] = useState(calcRestante)
+  // segundosRestantes lo calcula el backend (servidor vs servidor): inmune a la zona
+  // horaria y al reloj del cliente. Aqui solo se decrementa localmente cada segundo.
+  const [remaining, setRemaining] = useState(Math.max(0, Math.floor(av.segundosRestantes ?? 0)))
 
   useEffect(() => {
+    setRemaining(Math.max(0, Math.floor(av.segundosRestantes ?? 0)))
     if (av.estado !== 'EN_CURSO') return
     const interval = setInterval(() => {
-      setRemaining(calcRestante())
+      setRemaining(prev => (prev > 0 ? prev - 1 : 0))
     }, 1000)
     return () => clearInterval(interval)
-  }, [av.fechaFin, av.estado])
+  }, [av.segundosRestantes, av.estado])
 
   const total = av.fechaFin && av.fechaInicio
     ? Math.max(1, Math.floor((new Date(av.fechaFin) - new Date(av.fechaInicio)) / 1000))
@@ -29,7 +26,7 @@ function AventuraCard({ av, onReclamar }) {
     : Math.min(100, Math.round(((total - remaining) / total) * 100))
 
   const formatTiempo = (seg) => {
-    if (seg <= 0) return 'Finalizando...'
+    if (seg <= 0) return '¡Lista!'
     const h = Math.floor(seg / 3600)
     const m = Math.floor((seg % 3600) / 60)
     const s = seg % 60
