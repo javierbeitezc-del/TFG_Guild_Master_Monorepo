@@ -169,7 +169,7 @@ export default function AventurasPage() {
         <div style={{marginBottom:'1.5rem'}}>
           <h2 style={{fontSize:'1rem',marginBottom:'0.8rem',color:'var(--success)'}}>🎁 Listas para reclamar</h2>
           <div className="grid-3">
-            {pendientes.map(av => <AventuraCard key={av.id} av={av} done onReclamar={handleReclamar} />)}
+            {pendientes.map(av => <AventuraCard key={av.id} av={av} done fetchedAt={fetchedAt} onReclamar={handleReclamar} />)}
           </div>
         </div>
       )}
@@ -178,7 +178,7 @@ export default function AventurasPage() {
         <div style={{marginBottom:'1.5rem'}}>
           <h2 style={{fontSize:'1rem',marginBottom:'0.8rem'}}>⚔️ En curso</h2>
           <div className="grid-3">
-            {activas.map(av => <AventuraCard key={av.id} av={av} done={false} onReclamar={handleReclamar} />)}
+            {activas.map(av => <AventuraCard key={av.id} av={av} done={false} fetchedAt={fetchedAt} onReclamar={handleReclamar} />)}
           </div>
         </div>
       )}
@@ -219,12 +219,14 @@ export default function AventurasPage() {
   )
 }
 
-function AventuraCard({ av, done, onReclamar }) {
+function AventuraCard({ av, done, fetchedAt, onReclamar }) {
   const total = av.fechaFin && av.fechaInicio
     ? Math.max(1, Math.floor((new Date(av.fechaFin) - new Date(av.fechaInicio)) / 1000))
     : 120
+  // Tiempo restante "vivo": el snapshot del backend menos lo transcurrido desde la ultima carga
+  // (intervalo medido con el reloj del cliente, que se cancela). Asi la barra avanza cada segundo.
   const restante = (av.estado === 'EN_CURSO' && !done)
-    ? Math.max(0, Math.floor(av.segundosRestantes ?? 0))
+    ? Math.max(0, Math.floor((av.segundosRestantes ?? 0) - (Date.now() - fetchedAt) / 1000))
     : 0
   const pct = done ? 100
     : Math.min(100, Math.round(((total - restante) / total) * 100))
